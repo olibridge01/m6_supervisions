@@ -75,11 +75,11 @@ class Exercise5:
         for i_sample in range(self.n_samples):
             self.atom_data[i_sample,:] = sorted(self.atom_data[i_sample,:], key=lambda Atom: Atom.id)
 
-        # for i in range(30):
-        #     print(self.atom_data[0,i].id)
-        # print(self.atom_data[0,1328].pos)
 
     def centre_of_mass(self,i_sample):
+        """
+        Compute centre of mass of all particles for each sample
+        """
         com = np.zeros(3)
         for i_dim in range(3):
             for i_particle in self.atom_data[i_sample,:]:
@@ -87,34 +87,48 @@ class Exercise5:
         self.com[i_sample] = Centroid(com[0], com[1], com[2])
 
     def compute_msd(self):
+        """
+        Iterate through and compute MSD for each sample
+        """
         self.msd = np.zeros(self.n_samples)
         for i_sample in range(self.n_samples):
             print(f'{i_sample+1} / {self.n_samples}')
             self.centre_of_mass(i_sample)
             for idx, particle in enumerate(self.atom_data[i_sample,:]):
                 vec = np.linalg.norm(particle.pos - self.atom_data[0,idx].pos - (self.com[i_sample].pos - self.com[0].pos))
-                # vec = np.linalg.norm(particle.pos - self.atom_data[0,idx].pos)
 
                 self.msd[i_sample] += (1/self.n_atoms) * (vec**2)
 
     def plot_msd(self):
+        """
+        Plot data from computed MSD
+        """
         self.compute_msd()
         for i in range(self.n_samples):
             print(self.com[i].pos)
         print(self.msd)
         samples = np.linspace(0,49,50)
+        samples *= (self.timestep_length*self.n_timesteps_per_sample)
         plt.plot(samples,self.msd)
+        plt.xlabel('$t$ / $s$')
+        plt.ylabel(r'$\langle r^2(t) \rangle$ / $\AA^2$')
+        output_data = np.zeros((2,self.n_samples))
+        output_data[0] = samples
+        output_data[1] = self.msd
+        # np.savetxt('results/ex5_msd_B.csv',output_data,delimiter=',')
         plt.show()
 
     def compute_diff_coeff(self):
         self.compute_msd()
-        # Compute diffusion coeff in m^2 s^-1 (SI units)
-        self.D = (self.msd[self.n_samples-1] * angstrom**2) / (6 * (self.n_samples-1 * self.n_timesteps_per_sample * self.timestep_length))
+        # Compute diffusion coefficient in m^2 s^-1 (SI units)
+        self.D = (self.msd[self.n_samples-1] * angstrom**2) / (6 * ((self.n_samples-1) * self.n_timesteps_per_sample * self.timestep_length))
+
+        # Print diffusion coefficient in reduced units
         print(self.D * (tau/(sigma**2)))
 
-
-filename = 'md_data/diffusionA.xyz'
-ex5 = Exercise5(filename)
-ex5.compute_diff_coeff()
-
+if __name__ == '__main__':
+    filename = 'md_data/diffusionA.xyz'
+    ex5 = Exercise5(filename)
+    print(ex5.n_samples)
+    ex5.compute_diff_coeff()
 

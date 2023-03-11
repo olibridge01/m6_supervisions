@@ -133,11 +133,11 @@ class RDF:
 
 
 # Call RDF class and plot radial distribution function
-filename = "md_data/ideal.xyz"
-ideal_gas = RDF(filename,0,0,n_points=400)
-ideal_gas.calculate_rdf()
-ideal_gas.plot_rdf()
-
-# Measure program runtime
-end = time.time()
-print(f'Runtime: {end-start}')
+# filename = "md_data/ideal.xyz"
+# ideal_gas = RDF(filename,0,0,n_points=400)
+# ideal_gas.calculate_rdf()
+# ideal_gas.plot_rdf()
+#
+# # Measure program runtime
+# end = time.time()
+# print(f'Runtime: {end-start}')

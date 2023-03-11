@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time as time
+import matplotlib
 
 # Program global variables; universal constants/conversions
 HEADER_LINES = 9
@@ -9,6 +10,7 @@ NA = 6.02214129e+23
 kcal = 4184
 angstrom = 1e-10
 femto = 1e-15
+sigma = 3.4
 
 def kcalmol_to_joule(num):
     return num * (kcal/NA)
@@ -67,7 +69,7 @@ def is_contact(a,b,box_length,box_height):
 class Exercise6:
     def __init__(self, filename):
         self.filename = filename
-        self.polymer_length = 90
+        self.polymer_length = 40
         self.parse_data()
 
     def parse_data(self):
@@ -82,6 +84,7 @@ class Exercise6:
         self.box_length = float(file_data[5].split()[1]) - float(file_data[5].split()[0])
         self.box_height = float(file_data[7].split()[1]) - float(file_data[7].split()[0])
         self.n_samples = int(len(file_data) / (HEADER_LINES + self.n_atoms))
+        # print(len(file_data))
 
         self.atom_data = np.ndarray(shape=(self.n_samples, self.n_atoms), dtype=object)
         for idx, line in enumerate(file_data):
@@ -102,13 +105,41 @@ class Exercise6:
         self.N_c /= (self.n_samples * self.n_polymers)
         print(self.N_c)
 
+    def compute_phase_diagram(self,n_bins):
+        bead_z_vals = np.zeros(self.n_atoms*self.n_samples)
+        for i_sample in range(self.n_samples):
+            for i_atom in range(self.n_atoms):
+                bead_z_vals[i_sample*self.n_atoms + i_atom] = (self.atom_data[i_sample,i_atom].pos[2] * self.box_height)
+
+        count,bins,x = plt.hist(bead_z_vals, bins=n_bins)
+
+        bincenters = 0.5 * (bins[1:] + bins[:-1])
+        plt.cla()
+        plt.figure(figsize=(6,3))
+        plt.plot(bincenters,(count*(sigma)**3)/(self.n_samples * (self.box_length**2 * (self.box_height/n_bins))),color='r')
+        plt.ylim((0,0.8))
+        plt.xlim((0,220))
+        plt.xlabel('$z$ / $\AA$')
+        plt.ylabel(r'$\rho(z)$ / $\sigma^{-3}$')
+        plt.tight_layout()
+        plt.savefig('results/264K.pgf')
+        plt.show()
+
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
+
 filename1 = 'md_data/264K.xyz'
 filename2 = 'md_data/276K.xyz'
 filename3 = 'md_data/288K.xyz'
 filename4 = 'md_data/300K.xyz'
 
-ex6 = Exercise6(filename2)
-ex6.compute_order_parameter()
+filename = 'md_data/264K_testdata.xyz'
 
-
-
+ex6 = Exercise6(filename1)
+print(ex6.n_samples)
+ex6.compute_phase_diagram(40)
